@@ -1,0 +1,127 @@
+name: Release
+
+# Two ways to cut a release:
+#   1. Actions → Release → "Run workflow", enter a version (starts at 0.1.0).
+#      This bumps Cargo.toml/Cargo.lock, commits, tags `vX.Y.Z` and publishes.
+#   2. Push a tag yourself: `git tag v0.1.0 && git push origin v0.1.0`
+#      (skips the bump; just builds and publishes that tag).
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Semantic version to release, e.g. 0.1.0"
+        required: true
+        default: "0.1.0"
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  prepare:
+    name: bump & tag
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.out.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Validate version
+        run: |
+          V="${{ inputs.version }}"
+          echo "$V" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$' \
+            || { echo "::error::not a valid semver: $V"; exit 1; }
+
+      - name: Bump version in Cargo.toml / Cargo.lock
+        run: |
+          cargo install cargo-edit --locked
+          cargo set-version "${{ inputs.version }}"
+
+      - name: Commit, tag and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Cargo.toml Cargo.lock
+          git commit -m "release: v${{ inputs.version }}"
+          git tag "v${{ inputs.version }}"
+          git push origin "HEAD:${{ github.ref_name }}"
+          git push origin "v${{ inputs.version }}"
+
+      - id: out
+        run: echo "tag=v${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: build ${{ matrix.target }}
+    needs: [prepare]
+    if: ${{ always() && (github.event_name == 'push' || needs.prepare.result == 'success') }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: macos-latest
+            target: x86_64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+    steps:
+      - name: Resolve tag/ref
+        id: ref
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ needs.prepare.outputs.tag }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.ref.outputs.tag }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install aarch64 Linux linker
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+          mkdir -p .cargo
+          printf '[target.aarch64-unknown-linux-gnu]\nlinker = "aarch64-linux-gnu-gcc"\n' >> .cargo/config.toml
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Package (unix)
+        if: runner.os != 'Windows'
+        run: cp "target/${{ matrix.target }}/release/cav" "cav-${{ matrix.target }}"
+
+      - name: Package (windows)
+        if: runner.os == 'Windows'
+        run: copy "target\${{ matrix.target }}\release\cav.exe" "cav-${{ matrix.target }}.exe"
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ref.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            cav-${{ matrix.target }}
+            cav-${{ matrix.target }}.exe
+          fail_on_unmatched_files: false

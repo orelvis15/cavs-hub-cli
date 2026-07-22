@@ -1,0 +1,27 @@
+# Configuration for cargo-about (https://embarkstudios.github.io/cargo-about/).
+# Used with .github/licenses.tmpl to generate the third-party license notice.
+#
+#   cargo about generate .github/licenses.tmpl > docs/third-party-licenses.txt
+
+# Licenses we accept for dependencies. A build that pulls in a crate under a
+# license not listed here will fail `cargo about`, prompting a review.
+accepted = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "MPL-2.0",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+]
+
+# Evaluate dependencies for the host target set; keep it simple for a CLI.
+targets = [
+    "x86_64-unknown-linux-gnu",
+    "aarch64-apple-darwin",
+    "x86_64-apple-darwin",
+    "x86_64-pc-windows-msvc",
+]

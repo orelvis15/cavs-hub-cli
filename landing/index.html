@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cav — CAVS Hub on the command line</title>
+<meta name="description" content="cav is the CAVS Hub command-line client. Wire Git LFS to content-defined, deduplicated transfers in one command — so only the bytes that changed ever travel.">
+<link rel="icon" type="image/png" href="./assets/favicon.png">
+<link rel="apple-touch-icon" href="./assets/cavs-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:        #0a0c10;
+    --ink-2:      #0e1116;
+    --panel:      #12161d;
+    --panel-2:    #171c25;
+    --line:       #232a34;
+    --line-soft:  #1a2028;
+    --fg:         #e8ecf2;
+    --fg-dim:     #9aa6b6;
+    --fg-mute:    #63707f;
+    --mint:       #5ff0cf;
+    --mint-deep:  #17b898;
+    --amber:      #ffbf6b;
+    --violet:     #9d8bff;
+    --red:        #ff6d6d;
+    --display: "Bricolage Grotesque", sans-serif;
+    --body: "Hanken Grotesk", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+    --maxw: 1160px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--body);
+    background: var(--ink);
+    color: var(--fg);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    /* faint chunk-grid texture — the "content-defined chunking" motif */
+    background-image:
+      linear-gradient(var(--line-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size: 46px 46px, 46px 46px;
+    background-position: -1px -1px;
+  }
+  body::before {
+    /* radial mint glow bleeding from the top */
+    content: "";
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(900px 520px at 78% -8%, rgba(95,240,207,.10), transparent 60%),
+      radial-gradient(700px 500px at 8% 4%, rgba(157,139,255,.07), transparent 55%);
+  }
+
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: var(--mint); color: #04120e; }
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
+
+  /* ---------- nav ---------- */
+  header {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px);
+    background: rgba(10,12,16,.72);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .nav { display: flex; align-items: center; gap: 32px; height: 66px; }
+  .brand {
+    font-family: var(--mono); font-weight: 700; font-size: 19px;
+    letter-spacing: -.5px; display: flex; align-items: center; gap: 10px;
+  }
+  .brand .prompt { color: var(--mint); }
+  .brand-logo {
+    width: 30px; height: 30px; border-radius: 50%; display: block;
+    box-shadow: 0 0 0 1px var(--line), 0 0 18px -6px rgba(95,240,207,.5);
+    transition: box-shadow .2s, transform .2s;
+  }
+  .brand:hover .brand-logo { box-shadow: 0 0 0 1px var(--mint), 0 0 22px -4px rgba(95,240,207,.7); transform: rotate(-6deg); }
+  .hero-mark {
+    width: 76px; height: 76px; border-radius: 50%; display: block; margin-bottom: 26px;
+    box-shadow: 0 0 0 1px var(--line), 0 0 46px -10px rgba(95,240,207,.45);
+    animation: floaty 5.5s ease-in-out infinite;
+  }
+  @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+  .brand .caret {
+    display: inline-block; width: 9px; height: 18px; background: var(--mint);
+    border-radius: 1px; animation: blink 1.1s step-end infinite; transform: translateY(2px);
+  }
+  @keyframes blink { 0%,50% { opacity: 1; } 50.01%,100% { opacity: 0; } }
+  .nav-links { display: flex; gap: 26px; margin-left: auto; align-items: center; }
+  .nav-links a {
+    font-size: 14.5px; color: var(--fg-dim); font-weight: 500;
+    transition: color .18s;
+  }
+  .nav-links a:hover { color: var(--fg); }
+  .nav-gh {
+    border: 1px solid var(--line); border-radius: 8px; padding: 7px 15px;
+    color: var(--fg) !important; display: flex; align-items: center; gap: 8px;
+    transition: border-color .18s, background .18s;
+  }
+  .nav-gh:hover { border-color: var(--mint); background: rgba(95,240,207,.06); }
+  .nav-toggle { display: none; }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 92px 0 40px; position: relative; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: var(--mono); font-size: 12.5px; letter-spacing: .5px;
+    color: var(--mint); text-transform: uppercase;
+    border: 1px solid var(--line); border-radius: 100px; padding: 6px 14px;
+    background: rgba(95,240,207,.04);
+  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 10px var(--mint); }
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(44px, 7.2vw, 92px);
+    line-height: .98; letter-spacing: -.03em; font-weight: 700;
+    margin: 26px 0 0; max-width: 15ch;
+  }
+  h1 .accent { color: var(--mint); }
+  h1 .strike { position: relative; color: var(--fg-mute); }
+  .lede {
+    margin-top: 26px; font-size: clamp(17px, 2vw, 20px);
+    color: var(--fg-dim); max-width: 54ch; line-height: 1.55;
+  }
+  .lede b { color: var(--fg); font-weight: 600; }
+
+  .cta-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-top: 34px; }
+  .install-pill {
+    display: flex; align-items: center; gap: 14px;
+    font-family: var(--mono); font-size: 15px;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 11px; padding: 13px 15px 13px 18px;
+  }
+  .install-pill .sh { color: var(--mint); }
+  .install-pill code { color: var(--fg); white-space: nowrap; }
+  .copy-btn {
+    font-family: var(--body); font-size: 12.5px; font-weight: 600;
+    color: var(--fg-dim); background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 7px; padding: 6px 11px; cursor: pointer; transition: all .16s;
+    white-space: nowrap;
+  }
+  .copy-btn:hover { color: var(--ink); background: var(--mint); border-color: var(--mint); }
+  .copy-btn.done { color: var(--ink); background: var(--mint); border-color: var(--mint); }
+  .ghost-btn {
+    font-weight: 600; font-size: 15px; color: var(--fg-dim);
+    padding: 13px 20px; border-radius: 11px; border: 1px solid var(--line);
+    transition: all .18s; display: inline-flex; align-items: center; gap: 8px;
+  }
+  .ghost-btn:hover { color: var(--fg); border-color: var(--fg-mute); }
+  .ghost-btn .arr { transition: transform .18s; }
+  .ghost-btn:hover .arr { transform: translateX(3px); }
+
+  /* ---------- terminal ---------- */
+  .term {
+    margin-top: 56px; border-radius: 14px; overflow: hidden;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--ink-2), #0b0e13);
+    box-shadow: 0 40px 90px -50px rgba(0,0,0,.9), 0 0 0 1px rgba(95,240,207,.04);
+  }
+  .term-bar {
+    display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+    background: var(--panel); border-bottom: 1px solid var(--line-soft);
+  }
+  .term-bar .tl { width: 12px; height: 12px; border-radius: 50%; }
+  .tl.r { background: #ff5f57; } .tl.y { background: #febc2e; } .tl.g { background: #28c840; }
+  .term-bar .title {
+    font-family: var(--mono); font-size: 12.5px; color: var(--fg-mute);
+    margin-left: 10px;
+  }
+  .term-body {
+    font-family: var(--mono); font-size: 14px; line-height: 1.85;
+    padding: 22px 24px 26px; white-space: pre-wrap; word-break: break-word;
+  }
+  .term-body .cmd { color: var(--fg); }
+  .term-body .cmd::before { content: "$ "; color: var(--mint); }
+  .term-body .flag { color: var(--amber); }
+  .term-body .out { color: var(--fg-dim); }
+  .term-body .ok { color: var(--mint); }
+  .term-body .path { color: var(--violet); }
+  .term-body .comment { color: var(--fg-mute); }
+  .term-body .num { color: var(--amber); }
+  .cursor-line { color: var(--mint); }
+
+  /* ---------- stats strip ---------- */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line-soft);
+    border: 1px solid var(--line-soft); border-radius: 14px; overflow: hidden; margin-top: 64px; }
+  .stat { background: var(--ink-2); padding: 26px 28px; }
+  .stat .big { font-family: var(--display); font-size: 34px; font-weight: 700; letter-spacing: -.02em; }
+  .stat .big .u { color: var(--mint); }
+  .stat .lbl { color: var(--fg-dim); font-size: 14px; margin-top: 4px; }
+
+  /* ---------- section scaffolding ---------- */
+  section { padding: 96px 0; }
+  .sec-head { max-width: 60ch; }
+  .kicker {
+    font-family: var(--mono); font-size: 13px; color: var(--mint);
+    letter-spacing: .5px; text-transform: uppercase;
+  }
+  h2 {
+    font-family: var(--display); font-size: clamp(30px, 4.4vw, 48px);
+    line-height: 1.04; letter-spacing: -.025em; font-weight: 700; margin-top: 14px;
+  }
+  .sec-head p { color: var(--fg-dim); font-size: 18px; margin-top: 16px; }
+
+  /* ---------- features ---------- */
+  .feat { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; margin-top: 40px; }
+  .feat:nth-of-type(even) .feat-copy { order: 2; }
+  .feat + .feat { margin-top: 30px; }
+  .feat-copy h3 { font-family: var(--display); font-size: 27px; letter-spacing: -.02em; font-weight: 700; }
+  .feat-copy .idx { font-family: var(--mono); font-size: 13px; color: var(--mint); }
+  .feat-copy p { color: var(--fg-dim); margin-top: 12px; font-size: 16.5px; }
+  .feat-list { list-style: none; margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+  .feat-list li { display: flex; gap: 11px; align-items: flex-start; color: var(--fg-dim); font-size: 15px; }
+  .feat-list li .tick { color: var(--mint); font-family: var(--mono); flex-shrink: 0; }
+
+  /* ---------- commands ---------- */
+  .cmd-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 44px; }
+  .cmd-card {
+    border: 1px solid var(--line-soft); border-radius: 12px; padding: 22px 22px 20px;
+    background: linear-gradient(180deg, var(--panel), var(--ink-2));
+    transition: border-color .2s, transform .2s;
+  }
+  .cmd-card:hover { border-color: var(--mint); transform: translateY(-3px); }
+  .cmd-card .sig { font-family: var(--mono); font-size: 15.5px; font-weight: 600; color: var(--fg); }
+  .cmd-card .sig .kw { color: var(--mint); }
+  .cmd-card .sig .arg { color: var(--amber); }
+  .cmd-card p { color: var(--fg-dim); font-size: 14.5px; margin-top: 10px; }
+
+  /* ---------- install ---------- */
+  .install-box { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; margin-top: 44px; background: var(--ink-2); }
+  .tabs { display: flex; border-bottom: 1px solid var(--line-soft); flex-wrap: wrap; }
+  .tab {
+    font-family: var(--mono); font-size: 14px; color: var(--fg-dim);
+    padding: 15px 22px; cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color .16s, border-color .16s; background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .tab:hover { color: var(--fg); }
+  .tab.active { color: var(--mint); border-bottom-color: var(--mint); }
+  .tab-panels { padding: 26px 28px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .code-block {
+    font-family: var(--mono); font-size: 14px; line-height: 1.9;
+    background: var(--ink); border: 1px solid var(--line-soft); border-radius: 10px;
+    padding: 18px 20px; position: relative; white-space: pre-wrap; word-break: break-word;
+  }
+  .code-block .sh { color: var(--mint); }
+  .code-block .comment { color: var(--fg-mute); }
+  .code-block .env { color: var(--amber); }
+  .code-block + .code-block { margin-top: 12px; }
+  .code-copy {
+    position: absolute; top: 12px; right: 12px;
+    font-family: var(--body); font-size: 12px; font-weight: 600;
+    color: var(--fg-dim); background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 6px; padding: 5px 9px; cursor: pointer; transition: all .16s;
+  }
+  .code-copy:hover, .code-copy.done { color: var(--ink); background: var(--mint); border-color: var(--mint); }
+  .panel .note { color: var(--fg-mute); font-size: 13.5px; margin-top: 14px; }
+  .panel .note code { font-family: var(--mono); color: var(--fg-dim); }
+
+  /* ---------- final cta ---------- */
+  .final {
+    text-align: center; border: 1px solid var(--line); border-radius: 20px;
+    padding: 70px 30px; margin-top: 30px; position: relative; overflow: hidden;
+    background:
+      radial-gradient(600px 300px at 50% 0%, rgba(95,240,207,.10), transparent 65%),
+      var(--ink-2);
+  }
+  .final h2 { max-width: 20ch; margin: 0 auto; }
+  .final p { color: var(--fg-dim); margin: 16px auto 30px; max-width: 48ch; font-size: 17px; }
+  .final .install-pill { display: inline-flex; }
+
+  /* ---------- footer ---------- */
+  footer { border-top: 1px solid var(--line-soft); padding: 46px 0 60px; margin-top: 60px; }
+  .foot { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space-between; align-items: flex-start; }
+  .foot .brand { font-size: 17px; }
+  .foot-tag { color: var(--fg-mute); font-size: 14px; margin-top: 12px; max-width: 40ch; }
+  .foot-cols { display: flex; gap: 60px; flex-wrap: wrap; }
+  .foot-col h4 { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--fg-mute); margin-bottom: 14px; font-family: var(--mono); font-weight: 500; }
+  .foot-col a { display: block; color: var(--fg-dim); font-size: 14.5px; margin-bottom: 9px; transition: color .16s; }
+  .foot-col a:hover { color: var(--mint); }
+  .foot-bottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 46px; padding-top: 26px; border-top: 1px solid var(--line-soft); color: var(--fg-mute); font-size: 13.5px; }
+
+  /* ---------- reveal ---------- */
+  .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1); }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 860px) {
+    .nav-links { display: none; }
+    .feat, .stats, .cmd-grid { grid-template-columns: 1fr; }
+    .feat:nth-of-type(even) .feat-copy { order: 0; }
+    .stats { grid-template-columns: 1fr; }
+    .hero { padding: 60px 0 20px; }
+    section { padding: 68px 0; }
+    .install-pill code { white-space: normal; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a href="#top" class="brand"><img src="./assets/cavs-logo.png" class="brand-logo" alt="CAVS Hub logo"><span class="prompt">cav</span><span class="caret"></span></a>
+    <nav class="nav-links">
+      <a href="#why">Why cav</a>
+      <a href="#commands">Commands</a>
+      <a href="#install">Install</a>
+      <a href="./docs/README.md">Docs</a>
+      <a href="https://github.com/orelvis15/cavs-hub-cli" class="nav-gh" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </nav>
+  </div>
+</header>
+
+<a id="top"></a>
+<main class="wrap">
+
+  <!-- HERO -->
+  <section class="hero">
+    <img src="./assets/cavs-logo.png" class="hero-mark" alt="CAVS Hub logo">
+    <span class="eyebrow"><span class="dot"></span>CAVS Hub · command-line client</span>
+    <h1>Push the <span class="accent">bytes that changed</span>. Skip the rest.</h1>
+    <p class="lede"><b>cav</b> connects your Git repo to CAVS Hub and wires Git LFS to a content-defined, deduplicated transfer agent — so pushes and pulls move only the chunks you don't already have.</p>
+
+    <div class="cta-row">
+      <div class="install-pill">
+        <span class="sh">$</span>
+        <code id="hero-cmd">curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/install.sh | sh</code>
+        <button class="copy-btn" data-copy="#hero-cmd">Copy</button>
+      </div>
+      <a href="#install" class="ghost-btn">Other ways to install <span class="arr">→</span></a>
+    </div>
+
+    <!-- TERMINAL -->
+    <div class="term reveal">
+      <div class="term-bar">
+        <span class="tl r"></span><span class="tl y"></span><span class="tl g"></span>
+        <span class="title">~/game-assets — cav</span>
+      </div>
+      <div class="term-body"><span class="cmd">cav login</span>
+<span class="out">Paste your CAVS access token: </span><span class="path">cavs_pat_••••••••••••</span>
+<span class="ok">✓ authenticated as orelvis · org: defensores-caa</span>
+
+<span class="cmd">cav repo connect defensores-caa/game-assets</span>
+<span class="out">→ set lfs.url            </span><span class="ok">ok</span>
+<span class="out">→ wired cavs-lfs-agent   </span><span class="ok">ok</span>
+<span class="ok">✓ repository connected. push through CAVS is live.</span>
+
+<span class="cmd">git push origin main</span>
+<span class="out">Uploading LFS objects: chunking 2.4 GB…</span>
+<span class="out">deduplicated  </span><span class="num">2.1 GB</span><span class="out"> already on Hub · uploading </span><span class="num">318 MB</span>
+<span class="ok">✓ done in 6.2s</span>
+<span class="cursor-line">▊</span></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats reveal">
+      <div class="stat"><div class="big">7<span class="u"> commands</span></div><div class="lbl">The whole surface. No config files to hand-edit.</div></div>
+      <div class="stat"><div class="big"><span class="u">~1</span> min</div><div class="lbl">From <code style="font-family:var(--mono);font-size:.8em">login</code> to a deduplicated push.</div></div>
+      <div class="stat"><div class="big">Rust<span class="u"> · MIT</span></div><div class="lbl">A single static binary, open source.</div></div>
+    </div>
+  </section>
+
+  <!-- WHY / FEATURES -->
+  <section id="why">
+    <div class="sec-head">
+      <span class="kicker">// why cav</span>
+      <h2>A thin client with a heavy payoff.</h2>
+      <p>cav does three jobs well: authenticate, connect a repo, and stay out of the way. The chunking and dedup happen in the transfer agent — cav just wires it up correctly, every time.</p>
+    </div>
+
+    <div class="feat reveal">
+      <div class="feat-copy">
+        <div class="idx">01 — transfer</div>
+        <h3>Content-defined dedup, on every push</h3>
+        <p>Once a repo is connected, Git LFS routes through <code style="font-family:var(--mono);color:var(--violet)">cavs-lfs-agent</code>. Assets are content-defined-chunked and deduplicated, so only bytes the Hub has never seen travel the wire.</p>
+        <ul class="feat-list">
+          <li><span class="tick">▸</span> Ideal for large binary & game-asset repos</li>
+          <li><span class="tick">▸</span> Re-uploads of near-identical files collapse to deltas</li>
+          <li><span class="tick">▸</span> Works with the Git LFS you already use — no new verbs to learn</li>
+        </ul>
+      </div>
+      <div class="term reveal">
+        <div class="term-bar"><span class="tl r"></span><span class="tl y"></span><span class="tl g"></span><span class="title">git push</span></div>
+        <div class="term-body"><span class="cmd">git push</span>
+<span class="out">chunking      level.pak  </span><span class="num">1.9 GB</span>
+<span class="out">dedup hit     </span><span class="ok">94%</span>
+<span class="out">on the wire   </span><span class="num">118 MB</span>
+<span class="ok">✓ pushed</span></div>
+      </div>
+    </div>
+
+    <div class="feat reveal">
+      <div class="feat-copy">
+        <div class="idx">02 — setup</div>
+        <h3>One command to connect a repo</h3>
+        <p><code style="font-family:var(--mono);color:var(--mint)">cav repo connect</code> points <code style="font-family:var(--mono);color:var(--fg)">lfs.url</code> at CAVS and installs the transfer agent for that repository. Or wire just the agent with <code style="font-family:var(--mono);color:var(--mint)">install-lfs</code>.</p>
+        <ul class="feat-list">
+          <li><span class="tick">▸</span> No manual <code style="font-family:var(--mono)">.lfsconfig</code> surgery</li>
+          <li><span class="tick">▸</span> Per-repo — your other repos are untouched</li>
+          <li><span class="tick">▸</span> <code style="font-family:var(--mono)">cav status</code> shows exactly what's configured, offline</li>
+        </ul>
+      </div>
+      <div class="term reveal">
+        <div class="term-bar"><span class="tl r"></span><span class="tl y"></span><span class="tl g"></span><span class="title">cav status</span></div>
+        <div class="term-body"><span class="cmd">cav status</span>
+<span class="out">config   </span><span class="path">~/.config/cav/config.toml</span>
+<span class="out">api      </span><span class="out">https://api.cavscloud.com</span>
+<span class="out">login    </span><span class="ok">authenticated</span>
+<span class="out">lfs      </span><span class="ok">cavs-lfs-agent wired</span></div>
+      </div>
+    </div>
+
+    <div class="feat reveal">
+      <div class="feat-copy">
+        <div class="idx">03 — auth & upkeep</div>
+        <h3>Token auth, and it keeps itself current</h3>
+        <p>Log in once with a <code style="font-family:var(--mono);color:var(--amber)">cavs_</code> access token minted in the dashboard — stored <code style="font-family:var(--mono)">0600</code>, scoped to what you allow. <code style="font-family:var(--mono);color:var(--mint)">cav update</code> replaces the binary in place.</p>
+        <ul class="feat-list">
+          <li><span class="tick">▸</span> Personal / repo / CI tokens, bounded by their scopes</li>
+          <li><span class="tick">▸</span> A once-a-day background check nudges you when a release lands</li>
+          <li><span class="tick">▸</span> Opt out with <code style="font-family:var(--mono)">CAV_NO_UPDATE_CHECK=1</code></li>
+        </ul>
+      </div>
+      <div class="term reveal">
+        <div class="term-bar"><span class="tl r"></span><span class="tl y"></span><span class="tl g"></span><span class="title">cav update</span></div>
+        <div class="term-body"><span class="cmd">cav update</span>
+<span class="out">current  0.1.0</span>
+<span class="out">latest   </span><span class="ok">0.1.0</span>
+<span class="ok">✓ already up to date</span>
+
+<span class="cmd">cav update <span class="flag">--check</span></span>
+<span class="out">a newer release exists: </span><span class="num">0.2.0</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMANDS -->
+  <section id="commands">
+    <div class="sec-head">
+      <span class="kicker">// reference</span>
+      <h2>Every command cav has.</h2>
+      <p>The complete surface area — nothing hidden behind config files.</p>
+    </div>
+    <div class="cmd-grid">
+      <div class="cmd-card reveal"><div class="sig"><span class="kw">cav</span> login</div><p>Store &amp; validate a <code style="font-family:var(--mono)">cavs_…</code> access token, created in the dashboard → Tokens.</p></div>
+      <div class="cmd-card reveal"><div class="sig"><span class="kw">cav</span> logout</div><p>Remove the stored credentials from disk.</p></div>
+      <div class="cmd-card reveal"><div class="sig"><span class="kw">cav</span> whoami</div><p>Show the authenticated identity and the organizations it belongs to.</p></div>
+      <div class="cmd-card reveal"><div class="sig"><span class="kw">cav</span> repo connect <span class="arg">&lt;org&gt;/&lt;repo&gt;</span></div><p>Point the current repo's <code style="font-family:var(--mono)">lfs.url</code> at CAVS and wire the transfer agent.</p></div>
+      <div class="cmd-card reveal"><div class="sig"><span class="kw">cav</span> install-lfs</div><p>Configure just the CAVS LFS transfer agent for the current repo.</p></div>
+      <div class="cmd-card reveal"><div class="sig"><span class="kw">cav</span> status</div><p>Print the config path, API base and login state — no network calls.</p></div>
+      <div class="cmd-card reveal"><div class="sig"><span class="kw">cav</span> update <span class="arg">[--check]</span></div><p>Update <code style="font-family:var(--mono)">cav</code> in place to the latest release; <code style="font-family:var(--mono)">--check</code> only reports.</p></div>
+      <div class="cmd-card reveal"><div class="sig"><span class="kw">cav</span> <span class="arg">--api &lt;url&gt;</span></div><p>Global flag to override the API base for one invocation (or set <code style="font-family:var(--mono)">$CAVS_API</code>).</p></div>
+    </div>
+  </section>
+
+  <!-- INSTALL -->
+  <section id="install">
+    <div class="sec-head">
+      <span class="kicker">// install</span>
+      <h2>Get cav in under a minute.</h2>
+      <p>Prebuilt binaries ship on GitHub Releases for macOS, Linux and Windows. Or build from source.</p>
+    </div>
+
+    <div class="install-box reveal">
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="macos">macOS / Linux</button>
+        <button class="tab" data-tab="pin">Pin a version</button>
+        <button class="tab" data-tab="windows">Windows</button>
+        <button class="tab" data-tab="source">From source</button>
+      </div>
+      <div class="tab-panels">
+
+        <div class="panel active" data-panel="macos">
+          <div class="code-block"><button class="code-copy" data-copy-parent>Copy</button><span class="comment"># installs the latest release for your platform</span>
+<span class="sh">curl</span> -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/install.sh | sh</div>
+          <p class="note">Then run <code>cav login</code> and paste a token from the dashboard.</p>
+        </div>
+
+        <div class="panel" data-panel="pin">
+          <div class="code-block"><button class="code-copy" data-copy-parent>Copy</button><span class="comment"># pin to a specific published version</span>
+<span class="sh">curl</span> -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/install.sh | <span class="env">CAVS_VERSION=0.1.0</span> sh</div>
+          <p class="note">Useful for CI where you want a reproducible <code>cav</code> version.</p>
+        </div>
+
+        <div class="panel" data-panel="windows">
+          <div class="code-block"><button class="code-copy" data-copy-parent>Copy</button><span class="comment"># download cav-x86_64-pc-windows-msvc.exe from Releases,</span>
+<span class="comment"># rename it to cav.exe, and put it on your PATH.</span>
+Invoke-WebRequest -Uri https://github.com/orelvis15/cavs-hub-cli/releases/latest -OutFile cav.exe</div>
+          <p class="note">Or grab the asset directly from the <a href="https://github.com/orelvis15/cavs-hub-cli/releases" target="_blank" rel="noopener" style="color:var(--mint)">Releases page</a>.</p>
+        </div>
+
+        <div class="panel" data-panel="source">
+          <div class="code-block"><button class="code-copy" data-copy-parent>Copy</button><span class="comment"># builds cav, plus cavs-lfs-agent from a sibling cavs-oss checkout if present</span>
+<span class="sh">git</span> clone https://github.com/orelvis15/cavs-hub-cli && cd cavs-hub-cli
+./build-install.sh</div>
+          <p class="note">Requires a Rust toolchain (<code>cargo build --release</code> produces <code>target/release/cav</code>).</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section style="padding-top:20px;">
+    <div class="final reveal">
+      <span class="kicker">// ship it</span>
+      <h2>Stop re-uploading bytes you've already pushed.</h2>
+      <p>Connect a repo in one command and let CAVS Hub carry only the deltas.</p>
+      <div class="install-pill">
+        <span class="sh">$</span>
+        <code id="final-cmd">curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/install.sh | sh</code>
+        <button class="copy-btn" data-copy="#final-cmd">Copy</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <div class="brand"><img src="./assets/cavs-logo.png" class="brand-logo" alt="CAVS Hub logo"><span class="prompt">cav</span><span class="caret"></span></div>
+        <p class="foot-tag">The CAVS Hub command-line client. Content-defined, deduplicated Git LFS transfers — open source, MIT.</p>
+      </div>
+      <div class="foot-cols">
+        <div class="foot-col">
+          <h4>Product</h4>
+          <a href="#why">Why cav</a>
+          <a href="#commands">Commands</a>
+          <a href="#install">Install</a>
+        </div>
+        <div class="foot-col">
+          <h4>Docs</h4>
+          <a href="./docs/install_macos.md">macOS</a>
+          <a href="./docs/install_linux.md">Linux</a>
+          <a href="./docs/install_windows.md">Windows</a>
+          <a href="./docs/install_source.md">From source</a>
+        </div>
+        <div class="foot-col">
+          <h4>Project</h4>
+          <a href="https://github.com/orelvis15/cavs-hub-cli" target="_blank" rel="noopener">Repository</a>
+          <a href="https://github.com/orelvis15/cavs-oss" target="_blank" rel="noopener">cavs-oss</a>
+          <a href="https://github.com/orelvis15/cavs-hub-cli/blob/main/.github/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
+          <a href="https://github.com/orelvis15/cavs-hub-cli/blob/main/LICENSE" target="_blank" rel="noopener">License (MIT)</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 CAVS Hub · Released under the MIT License.</span>
+      <span style="font-family:var(--mono)">built with cargo build --release</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ---- copy buttons (pill/cta) ----
+  function flash(btn) {
+    const prev = btn.textContent;
+    btn.textContent = "Copied ✓"; btn.classList.add("done");
+    setTimeout(() => { btn.textContent = prev; btn.classList.remove("done"); }, 1400);
+  }
+  document.querySelectorAll("[data-copy]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const el = document.querySelector(btn.getAttribute("data-copy"));
+      navigator.clipboard.writeText(el.textContent.trim()).then(() => flash(btn));
+    });
+  });
+  // ---- copy buttons (code blocks) ----
+  document.querySelectorAll("[data-copy-parent]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const block = btn.parentElement.cloneNode(true);
+      block.querySelector("button")?.remove();
+      navigator.clipboard.writeText(block.textContent.trim()).then(() => flash(btn));
+    });
+  });
+  // ---- install tabs ----
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      const name = tab.getAttribute("data-tab");
+      document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t === tab));
+      document.querySelectorAll(".panel").forEach(p =>
+        p.classList.toggle("active", p.getAttribute("data-panel") === name));
+    });
+  });
+  // ---- scroll reveal ----
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>

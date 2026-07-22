@@ -1,0 +1,27 @@
+[package]
+name = "cavs-hub-cli"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Command-line client for CAVS Hub: authenticate, connect Git repositories and wire up the CAVS Git LFS transfer agent."
+repository = "https://github.com/orelvis15/cavs-hub-cli"
+homepage = "https://cavscloud.com"
+readme = "README.md"
+keywords = ["cavs", "cloud", "git-lfs", "cli"]
+categories = ["command-line-utilities", "development-tools"]
+
+# The installed command is `cav`.
+[[bin]]
+name = "cav"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+ureq = { version = "2.10", features = ["json"] }
+
+[dev-dependencies]
+tempfile = "3.10"

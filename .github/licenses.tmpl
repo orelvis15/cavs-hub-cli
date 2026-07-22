@@ -1,0 +1,17 @@
+CAVS Hub CLI third-party dependencies
+======================================
+
+The following open source dependencies are used to build the CAVS Hub CLI.
+
+Generated with cargo-about:
+
+    cargo install cargo-about
+    cargo about generate .github/licenses.tmpl > docs/third-party-licenses.txt
+
+(Configuration lives in .github/about.toml.)
+
+{{#each licenses}}
+{{#each used_by}}
+{{crate.name}} ({{crate.version}}) - {{../name}} - {{../id}}
+{{/each}}
+{{/each}}
