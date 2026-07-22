@@ -1,7 +1,8 @@
 //! `cav` — the CAVS Hub command-line client.
 //!
 //! This is the tool users install with
-//! `curl -fsSL https://cavscloud.com/install.sh | sh`. It talks to the CAVS
+//! `curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/install.sh | sh`.
+//! It talks to the CAVS
 //! Hub control plane (the Go API in the `cavshub` repo) over HTTPS and wires a
 //! local Git repository up to the CAVS custom Git LFS transfer agent
 //! (`cavs-lfs-agent`, from the `cavs-oss` repo).

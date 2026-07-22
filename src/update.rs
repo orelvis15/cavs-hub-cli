@@ -226,7 +226,7 @@ fn permission_hint(dir: &std::path::Path, e: std::io::Error) -> anyhow::Error {
         anyhow!(
             "cannot write to {} (permission denied).\n\
              Re-run with elevated privileges, or reinstall:\n\
-             curl -fsSL https://cavscloud.com/install.sh | sh",
+             curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/install.sh | sh",
             dir.display()
         )
     } else {

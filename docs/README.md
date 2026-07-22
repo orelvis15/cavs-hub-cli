@@ -14,7 +14,7 @@ Pick your platform:
 The quickest path on macOS/Linux is the install script:
 
 ```sh
-curl -fsSL https://cavscloud.com/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/install.sh | sh
 ```
 
 It installs two binaries:

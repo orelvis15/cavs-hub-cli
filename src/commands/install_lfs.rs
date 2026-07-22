@@ -43,7 +43,7 @@ pub fn wire(agent_path: &Option<String>) -> Result<String> {
             .ok_or_else(|| {
                 anyhow!(
                     "`{AGENT_BIN}` not found on PATH.\n\
-                     Install the CAVS tools (curl -fsSL https://cavscloud.com/install.sh | sh)\n\
+                     Install the CAVS tools (curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/install.sh | sh)\n\
                      or pass --agent-path /path/to/{AGENT_BIN}"
                 )
             })?

@@ -1,10 +1,7 @@
 # cavs-hub-cli
 
-The **CAVS Hub** command-line client — the `cav` command users install with:
-
-```sh
-curl -fsSL https://cavscloud.com/install.sh | sh
-```
+The **CAVS Hub** command-line client — the `cav` command. See
+[Install](#install) below for the one-line install.
 
 It is a thin client for the CAVS Hub control plane (the Go API in the `cavshub`
 repo). It authenticates with a CAVS access token, connects a local Git
@@ -25,6 +22,20 @@ curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/install
 # cavs-oss checkout if present:
 ./build-install.sh
 ```
+
+## Uninstall
+
+```sh
+# Removes cav and cavs-lfs-agent from your PATH:
+curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/uninstall.sh | sh
+
+# Also delete the config (~/.config/cav):
+curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/uninstall.sh | CAVS_PURGE=1 sh
+```
+
+Set `CAVS_INSTALL_DIR` if you installed to a custom directory. To remove by
+hand: `rm "$(command -v cav)" "$(command -v cavs-lfs-agent)"` and delete
+`~/.config/cav`.
 
 ## Commands
 

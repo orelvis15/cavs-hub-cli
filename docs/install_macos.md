@@ -3,7 +3,7 @@
 ## Install script (recommended)
 
 ```sh
-curl -fsSL https://cavscloud.com/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/install.sh | sh
 ```
 
 This detects your architecture (Apple Silicon `arm64` or Intel `x86_64`) and
@@ -13,7 +13,7 @@ when `/usr/local/bin` is not writable).
 Override the destination with `CAVS_INSTALL_DIR`:
 
 ```sh
-curl -fsSL https://cavscloud.com/install.sh | CAVS_INSTALL_DIR="$HOME/bin" sh
+curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/install.sh | CAVS_INSTALL_DIR="$HOME/bin" sh
 ```
 
 ## Homebrew
@@ -53,6 +53,12 @@ cav status
 
 ## Upgrade / uninstall
 
-- Upgrade: re-run the install script (it overwrites the existing binary).
-- Uninstall: `rm "$(command -v cav)" "$(command -v cavs-lfs-agent)"` and
-  remove `~/.config/cav`.
+- Upgrade: re-run the install script (it overwrites the existing binary), or
+  `cav update`.
+- Uninstall:
+  ```sh
+  curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/uninstall.sh | sh
+  ```
+  Add `CAVS_PURGE=1` to also delete `~/.config/cav`. By hand:
+  `rm "$(command -v cav)" "$(command -v cavs-lfs-agent)"` and remove
+  `~/.config/cav`.

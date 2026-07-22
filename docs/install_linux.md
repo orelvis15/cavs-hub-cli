@@ -3,7 +3,7 @@
 ## Install script (recommended)
 
 ```sh
-curl -fsSL https://cavscloud.com/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/install.sh | sh
 ```
 
 This detects your architecture (`x86_64` or `aarch64`) and installs `cav` and
@@ -19,7 +19,7 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.profile
 Override the destination with `CAVS_INSTALL_DIR`:
 
 ```sh
-curl -fsSL https://cavscloud.com/install.sh | CAVS_INSTALL_DIR=/usr/local/bin sh
+curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/install.sh | CAVS_INSTALL_DIR=/usr/local/bin sh
 ```
 
 ## Manual download
@@ -57,6 +57,11 @@ cav status
 
 ## Upgrade / uninstall
 
-- Upgrade: re-run the install script.
-- Uninstall: `rm "$(command -v cav)" "$(command -v cavs-lfs-agent)"` and
-  remove `~/.config/cav`.
+- Upgrade: re-run the install script, or `cav update`.
+- Uninstall:
+  ```sh
+  curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/uninstall.sh | sh
+  ```
+  Add `CAVS_PURGE=1` to also delete `~/.config/cav`. By hand:
+  `rm "$(command -v cav)" "$(command -v cavs-lfs-agent)"` and remove
+  `~/.config/cav`.

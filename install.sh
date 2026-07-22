@@ -2,8 +2,6 @@
 # =============================================================================
 # CAVS Hub installer — installs the latest published release via curl:
 #
-#   curl -fsSL https://cavscloud.com/install.sh | sh
-#   # or, straight from the repo:
 #   curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/install.sh | sh
 #
 # Downloads two binaries from GitHub Releases and puts them on your PATH:
