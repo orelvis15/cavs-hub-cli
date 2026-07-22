@@ -8,9 +8,10 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
-/// The production control plane. Override with `--api`, `$CAVS_API`, or by
-/// editing the stored config (e.g. `http://localhost:8080` for local dev).
-pub const DEFAULT_API_BASE: &str = "https://api.cavscloud.com";
+/// Default control-plane base. The hosted API is still in development, so this
+/// points at the local dev stack for now. Override with `--api`, `$CAVS_API`,
+/// or by editing the stored config.
+pub const DEFAULT_API_BASE: &str = "http://localhost:8080";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
