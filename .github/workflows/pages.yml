@@ -33,6 +33,10 @@ jobs:
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          # Auto-enable Pages (build_type=workflow) if it isn't already,
+          # so the deploy never fails on a "Get Pages site" 404.
+          enablement: true
 
       - name: Upload landing/ as the Pages artifact
         uses: actions/upload-pages-artifact@v3
