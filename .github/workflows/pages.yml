@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
         with:
           # Auto-enable Pages (build_type=workflow) if it isn't already,
           # so the deploy never fails on a "Get Pages site" 404.
