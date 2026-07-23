@@ -1,11 +1,11 @@
 #!/bin/sh
 # =============================================================================
-# CAVS Hub installer — installs the latest published release via curl:
+# CAVS Node installer — installs the latest published release via curl:
 #
 #   curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/install.sh | sh
 #
 # Downloads two binaries from GitHub Releases and puts them on your PATH:
-#   - cav              the CAVS Hub CLI          (orelvis15/cavs-hub-cli)
+#   - cav              the CAVS Node CLI          (orelvis15/cavs-hub-cli)
 #   - cavs-lfs-agent   the Git LFS transfer agent (orelvis15/cavs-oss, best-effort)
 #
 # Environment overrides:
@@ -70,7 +70,7 @@ main() {
   mkdir -p "$dir"
   tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
 
-  say "Installing CAVS Hub tools ($VERSION, $target) into $dir"
+  say "Installing CAVS Node tools ($VERSION, $target) into $dir"
 
   # cav — required.
   say "  downloading cav"

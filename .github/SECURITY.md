@@ -1,6 +1,6 @@
 # Security Policy
 
-We take the security of the CAVS Hub CLI seriously. Thank you for helping keep
+We take the security of the CAVS Node CLI seriously. Thank you for helping keep
 it and its users safe.
 
 ## Reporting a vulnerability
@@ -29,7 +29,7 @@ you once a fix is released (unless you prefer to remain anonymous).
 
 This policy covers the `cav` CLI in this repository. Issues in the CAVS core
 belong in [`cavs-oss`](https://github.com/orelvis15/cavs-oss); issues in the
-control-plane API belong in the CAVS Hub service repository.
+control-plane API belong in the CAVS Node service repository.
 
 ### Dependency advisories
 

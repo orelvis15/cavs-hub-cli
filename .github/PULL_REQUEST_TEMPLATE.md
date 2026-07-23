@@ -1,5 +1,5 @@
 <!--
-Thanks for contributing to CAVS Hub CLI!
+Thanks for contributing to CAVS Node CLI!
 
 If your pull request resolves an open issue, reference it below with
 "Fixes #NUMBER" so it closes automatically when merged.

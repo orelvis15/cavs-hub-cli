@@ -51,6 +51,10 @@ pub fn wire(agent_path: &Option<String>) -> Result<String> {
             .to_string(),
     };
 
+    // Ensure the LFS filters/hooks exist in this repo, otherwise git-lfs skips
+    // checkout on clone/pull even with a transfer agent configured.
+    git::lfs_install_local()?;
+
     git::set_config("lfs.standalonetransferagent", AGENT_NAME)?;
     git::set_config(&format!("lfs.customtransfer.{AGENT_NAME}.path"), &agent)?;
     // The agent processes one object per invocation; concurrency is handled by

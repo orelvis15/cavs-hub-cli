@@ -4,10 +4,10 @@
 > control plane yet, so `cav` defaults to a local dev stack
 > (`http://localhost:8080`). Point it elsewhere with `--api` or `$CAVS_API`.
 
-The **CAVS Hub** command-line client — the `cav` command. See
+The **CAVS Node** command-line client — the `cav` command. See
 [Install](#install) below for the one-line install.
 
-It is a thin client for the CAVS Hub control plane (the Go API in the `cavshub`
+It is a thin client for the CAVS Node control plane (the Go API in the `cavshub`
 repo). It authenticates with a CAVS access token, connects a local Git
 repository to a Hub repository, and wires Git LFS up to the CAVS custom transfer
 agent (`cavs-lfs-agent`, from the [`cavs-oss`](https://github.com/orelvis15/cavs-oss)
@@ -99,7 +99,7 @@ their scopes, so `whoami`, listing repos and `repo connect` all work.
 
 - **`cavs-oss`** — the open-source CAVS core (Rust): chunking, store, formats,
   and the `cavs-lfs-agent` transfer agent this CLI wires into Git.
-- **`cavshub`** — the CAVS Hub control plane (Go API + React dashboard) this CLI
+- **`cavshub`** — the CAVS Node control plane (Go API + React dashboard) this CLI
   authenticates against.
 
 ## Documentation

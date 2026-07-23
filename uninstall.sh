@@ -1,11 +1,11 @@
 #!/bin/sh
 # =============================================================================
-# CAVS Hub uninstaller — removes the binaries the installer put on your PATH:
+# CAVS Node uninstaller — removes the binaries the installer put on your PATH:
 #
 #   curl -fsSL https://raw.githubusercontent.com/orelvis15/cavs-hub-cli/main/uninstall.sh | sh
 #
 # Removes:
-#   - cav              the CAVS Hub CLI
+#   - cav              the CAVS Node CLI
 #   - cavs-lfs-agent   the Git LFS transfer agent
 #
 # Environment overrides:
@@ -52,7 +52,7 @@ remove_at() {  # path
 }
 
 main() {
-  say "Uninstalling CAVS Hub tools"
+  say "Uninstalling CAVS Node tools"
 
   for bin in $BINS; do
     # Directories we know the installer uses.

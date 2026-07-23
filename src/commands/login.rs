@@ -1,4 +1,4 @@
-//! `cav login` — store and validate a CAVS Hub access token.
+//! `cav login` — store and validate a CAVS Node access token.
 
 use crate::api::Client;
 use crate::config::Config;

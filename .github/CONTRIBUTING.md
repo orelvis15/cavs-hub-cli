@@ -1,4 +1,4 @@
-# Contributing to CAVS Hub CLI
+# Contributing to CAVS Node CLI
 
 Thanks for your interest in improving `cav`! This document explains how to build
 the project, run the tests, and submit changes.

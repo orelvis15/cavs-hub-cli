@@ -1,4 +1,4 @@
-# CAVS Hub CLI documentation
+# CAVS Node CLI documentation
 
 Internal documentation for the `cav` command line tool.
 
@@ -21,7 +21,7 @@ It installs two binaries:
 
 | Binary | Purpose |
 | --- | --- |
-| `cav` | the CAVS Hub CLI (this repo) |
+| `cav` | the CAVS Node CLI (this repo) |
 | `cavs-lfs-agent` | the Git LFS custom transfer agent (from [`cavs-oss`](https://github.com/orelvis15/cavs-oss)) |
 
 ## After installing

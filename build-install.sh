@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Build & install the CAVS Hub CLI from source (local development install).
+# Build & install the CAVS Node CLI from source (local development install).
 #
 #   ./build-install.sh
 #
 # Installs:
-#   - cav              the CAVS Hub CLI       (this crate, cavs-hub-cli)
+#   - cav              the CAVS Node CLI       (this crate, cavs-hub-cli)
 #   - cavs-lfs-agent   the Git LFS agent      (from the sibling cavs-oss repo,
 #                                              if present)
 #
